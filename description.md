@@ -1,12 +1,14 @@
-**NexCord** is an autonomous multimodal operations intelligence platform that helps organizations manage complex real-world operations such as college fests, conferences, weddings, and community events.
+**NexCord** is a **multimodal, human-in-the-loop operations intelligence platform** that helps organizations manage complex real-world operations such as college fests, conferences, weddings, and community events.
 
-NexCord combines computer vision, machine learning, retrieval-augmented generation, and agentic AI to understand the current operational state, detect and predict potential incidents, analyze their downstream impact, and generate possible response plans.
+NexCord combines **computer vision, machine learning, retrieval-augmented generation, and agentic AI** to understand the current operational state, detect and predict potential incidents, analyze their downstream effects, and generate actionable response plans.
 
-Instead of allowing an AI agent to directly modify systems, NexCord uses a controlled **observe → analyze → simulate → approve → execute → verify → recover** workflow. The agent first evaluates the situation and proposes a structured plan. After human approval, the plan is executed through an **MCP (Model Context Protocol) server**, which provides controlled access to scheduling, resources, people, notifications, and other operational capabilities. NexCord then verifies that the intended outcome actually occurred and can perform compensating actions when execution fails.
+Rather than allowing an AI agent to directly modify operational systems, NexCord follows a controlled **observe → detect → predict → retrieve → analyze → simulate → approve → execute → verify → recover** workflow. When an incident occurs, NexCord evaluates its potential impact and generates multiple resolution plans. The event planner reviews the alternatives and explicitly approves one before any operational changes are made.
 
-PostgreSQL maintains the authoritative operational state, while pgvector enables semantic retrieval of event policies, procedures, vendor information, and historical incidents. Machine-learning models provide additional intelligence such as visual occupancy detection, anomaly detection, and operational risk prediction.
+Once approved, NexCord executes the selected plan through a **self-hosted MCP (Model Context Protocol) server using Streamable HTTP**, which provides controlled access to operational capabilities such as scheduling, resource allocation, personnel management, and notifications. After execution, NexCord verifies whether the system has reached the intended target state. If verification fails, it performs appropriate **recovery or compensating actions** to restore a valid state.
 
-The platform is exposed through a voice-first and web-based interface, making it suitable for an Alexa+ experience while remaining an independent AI/ML systems project and portfolio platform.
+**PostgreSQL** serves as the authoritative source of operational state, while **pgvector** enables semantic retrieval of event policies, procedures, vendor information, and historical incident records. Machine-learning models provide additional intelligence, including **computer-vision-based occupancy detection, anomaly detection, and operational risk prediction**.
+
+NexCord provides a **voice-first and web-based experience**, allowing users to interact naturally with the system while receiving structured visual information such as incident summaries, impact analyses, and proposed action plans. The platform can therefore serve as a simulated Alexa+ experience while remaining an independent AI/ML systems project and portfolio platform.
 
 ### Core workflow
 
@@ -18,8 +20,10 @@ An organizer can ask:
 
 > “NexCord, the robotics final starts in 30 minutes. Check whether there are any problems.”
 
-NexCord can combine live event state, camera-based occupancy information, ML risk predictions, and relevant policies to identify problems. It can then propose alternatives such as moving the event, reallocating equipment, assigning backup personnel, and notifying participants.
+NexCord combines the current event state, camera-based occupancy information, machine-learning risk predictions, and relevant operational policies to identify potential issues.
 
-The organizer approves the plan, NexCord executes it through MCP, verifies the resulting state, and reports the outcome.
+For example, it may determine that the venue is approaching capacity, a judge is unavailable, and required equipment is malfunctioning. It then generates several possible resolutions, such as moving the event, reallocating equipment, assigning backup personnel, or adjusting the schedule.
 
-The system also includes an evaluation framework for measuring task completion, tool-selection accuracy, planning quality, latency, unsafe actions, and recovery success across simulated operational incidents.
+The organizer selects and approves a plan. NexCord executes the approved actions through its MCP server, verifies that the expected changes occurred, and reports the final state. If execution fails or the desired state is not reached, NexCord initiates recovery or compensating actions.
+
+The platform also includes an **automated evaluation suite** that measures task completion, tool-selection accuracy, planning quality, latency, unsafe actions, verification success, and recovery performance across simulated operational incidents.
