@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg18
+    container_name: nexcord-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: nexcord
+      POSTGRES_USER: nexcord
+      POSTGRES_PASSWORD: nexcord_dev_password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - nexcord_postgres_data:/var/lib/postgresql
+
+volumes:
+  nexcord_postgres_data:
