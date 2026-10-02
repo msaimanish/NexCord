@@ -7,7 +7,13 @@ authors = [
     { name = "msaimanish", email = "msaimanishreddy123@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "alembic>=1.20.0",
+    "psycopg>=3.3.6",
+    "psycopg-binary>=3.3.6",
+    "pydantic-settings>=2.15.0",
+    "sqlalchemy>=2.1.2",
+]
 
 [project.scripts]
 backend = "backend:main"
