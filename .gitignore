@@ -1,1 +1,52 @@
-notes.txt
+# Personal notes on project
+notes/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+
+# Build artifacts
+build/
+*.egg-info/
+
+# ML artifacts
+mlruns/
+models/
+checkpoints/
+*.pt
+*.pth
+*.onnx
+
+# Data
+data/raw/
+data/processed/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
