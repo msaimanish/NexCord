@@ -9,10 +9,13 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.20.0",
+    "fastapi>=0.142.2",
+    "mcp[cli]>=2.3.0",
     "psycopg>=3.3.6",
     "psycopg-binary>=3.3.6",
     "pydantic-settings>=2.15.0",
     "sqlalchemy>=2.1.2",
+    "uvicorn>=0.54.0",
 ]
 
 [project.scripts]
