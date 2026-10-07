@@ -9,11 +9,17 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.20.0",
+    "boto3>=1.43.108",
     "fastapi>=0.142.2",
+    "google-genai>=2.28.0",
+    "langgraph>=1.2.12",
+    "langgraph-checkpoint-sqlite>=3.1.1",
     "mcp[cli]>=2.3.0",
+    "pgvector>=0.5.0",
     "psycopg>=3.3.6",
     "psycopg-binary>=3.3.6",
     "pydantic-settings>=2.15.0",
+    "sentence-transformers>=6.1.0",
     "sqlalchemy>=2.1.2",
     "uvicorn>=0.54.0",
 ]

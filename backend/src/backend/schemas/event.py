@@ -10,5 +10,5 @@ class EventRead(BaseModel):
     start_time: datetime
     end_time: datetime
     status: str
-
+    expected_attendees: int
     model_config = ConfigDict(from_attributes=True)

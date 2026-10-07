@@ -9,7 +9,7 @@ from backend.routers import (
     rooms,
     vendors,
 )
-
+from backend.routers.operational_observations import router as operational_observations_router
 
 app = FastAPI(
     title="NexCord API",
@@ -17,6 +17,10 @@ app = FastAPI(
     version="0.1.0",
 )
 
+app.include_router(
+    operational_observations_router,
+    prefix="/api/v1",
+)
 
 app.include_router(
     events.router,

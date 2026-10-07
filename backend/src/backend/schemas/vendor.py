@@ -9,7 +9,7 @@ class VendorRead(BaseModel):
     phone: str | None
     email: str | None
     status: str
-
+    reliability_score: float
     model_config = ConfigDict(from_attributes=True)
 
 class VendorAvailabilityRead(BaseModel):

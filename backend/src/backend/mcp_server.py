@@ -27,7 +27,9 @@ from backend.services.plan_service import (
     verify_execution as verify_existing_execution,
     recover_execution as recover_existing_execution,
 )
-
+from backend.services.knowledge_service import (
+    query_knowledge as query_knowledge_service,
+)
 
 
 
@@ -92,12 +94,7 @@ def ping() -> dict:
     }
 
 
-if __name__ == "__main__":
-    mcp.run(
-        transport="streamable-http",
-        host="127.0.0.1",
-        port=8001,
-    )
+
 
 def serialize_event_state(state: dict) -> dict:
     event = state["event"]
@@ -706,3 +703,35 @@ def recover_execution(
 
     finally:
         db.close()
+
+
+@mcp.tool()
+def query_knowledge(
+    query: str,
+    top_k: int = 3,
+) -> dict:
+    """Search NexCord operational knowledge using semantic similarity."""
+
+    db = SessionLocal()
+
+    try:
+        return query_knowledge_service(
+            db,
+            query,
+            top_k,
+        )
+
+    except ValueError as exc:
+        return {
+            "error": str(exc),
+        }
+
+    finally:
+        db.close()
+
+if __name__ == "__main__":
+    mcp.run(
+        transport="streamable-http",
+        host="127.0.0.1",
+        port=8001,
+    )

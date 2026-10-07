@@ -12,7 +12,15 @@ from backend.services.incident_service import (
 from backend.services.room_service import (
     find_available_rooms,
 )
-from backend.models import Execution, Plan, PlanAction, Reservation, Room, Event
+from backend.models import (
+    Execution,
+    Plan,
+    PlanAction,
+    Reservation,
+    Room,
+    Event,
+    Person,
+)
 from backend.repositories.execution_repository import (
     create_execution,
     get_execution,
@@ -68,8 +76,14 @@ def generate_candidate_plans(
         incident_id,
     )
 
-    if existing_plans:
-        return existing_plans
+    proposed_plans = [
+        plan
+        for plan in existing_plans
+        if plan.status == "PROPOSED"
+    ]
+
+    if proposed_plans:
+        return proposed_plans
 
     incident = impact["incident"]
     event = impact["event"]
@@ -528,7 +542,7 @@ def _execute_action(
             "room_id": room_id,
             "start_time": reservation.start_time.isoformat(),
             "end_time": reservation.end_time.isoformat(),
-            "status": "CANCELLED",
+            "status": reservation.status,
         }
 
     if action.action_type == "CANCEL_RESERVATION":

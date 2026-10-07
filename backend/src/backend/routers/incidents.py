@@ -6,11 +6,15 @@ from backend.schemas.incident import (
 )
 from backend.dependencies import get_db
 from backend.services.incident_service import (
+    analyze_incident_impact,
     get_incident,
     list_incidents,
-    analyze_incident_impact,
+    record_crowding_observation,
 )
-
+from backend.schemas.crowding import (
+    CrowdingObservationCreate,
+    CrowdingObservationRead,
+)
 
 router = APIRouter(
     prefix="/incidents",
@@ -26,6 +30,40 @@ def get_incidents(
     db: Session = Depends(get_db),
 ):
     return list_incidents(db)
+
+@router.post(
+    "/crowding",
+    response_model=CrowdingObservationRead,
+)
+def record_crowding(
+    request: CrowdingObservationCreate,
+    db: Session = Depends(get_db),
+):
+    try:
+        return record_crowding_observation(
+            db,
+            request.event_id,
+            request.room_id,
+            request.observed_occupancy,
+            request.confidence,
+        )
+
+    except ValueError as exc:
+        message = str(exc)
+
+        if message in {
+            "Event not found",
+            "Room not found",
+        }:
+            raise HTTPException(
+                status_code=404,
+                detail=message,
+            )
+
+        raise HTTPException(
+            status_code=400,
+            detail=message,
+        )
 
 @router.get(
     "/{incident_id}/impact",

@@ -9,6 +9,12 @@ from backend.repositories.incident_repository import (
     get_incident_context as repository_get_incident_context,
     list_incidents as repository_list_incidents,
 )
+from backend.services.event_service import get_event
+from backend.services.room_service import get_room
+from backend.repositories.incident_repository import (
+    create_incident as repository_create_incident,
+    find_open_crowding_incident,
+)
 
 def list_incidents(db: Session) -> list[Incident]:
     return repository_list_incidents(db)
@@ -151,4 +157,127 @@ def analyze_incident_impact(
             for equipment, quantity in context["equipment_assignments"]
         ],
         "impact_facts": impact_facts,
+    }
+
+def record_crowding_observation(
+    db: Session,
+    event_id: int,
+    room_id: int,
+    observed_occupancy: int,
+    confidence: float,
+) -> dict:
+    if observed_occupancy < 0:
+        raise ValueError(
+            "observed_occupancy cannot be negative"
+        )
+
+    if not 0 <= confidence <= 1:
+        raise ValueError(
+            "confidence must be between 0 and 1"
+        )
+
+    event = get_event(
+        db,
+        event_id,
+    )
+
+    if event is None:
+        raise ValueError(
+            "Event not found"
+        )
+
+    room = get_room(
+        db,
+        room_id,
+    )
+
+    if room is None:
+        raise ValueError(
+            "Room not found"
+        )
+
+    occupancy_ratio = (
+        observed_occupancy / room.capacity
+    )
+
+    crowding = (
+        observed_occupancy > room.capacity
+    )
+
+    if not crowding:
+        return {
+            "event_id": event.id,
+            "room_id": room.id,
+            "room_capacity": room.capacity,
+            "observed_occupancy": observed_occupancy,
+            "occupancy_ratio": occupancy_ratio,
+            "crowding": False,
+            "incident": None,
+            "incident_created": False,
+        }
+
+    existing_incident = find_open_crowding_incident(
+        db,
+        event.id,
+        room.id,
+    )
+
+    if existing_incident is not None:
+        existing_incident.extra_data = {
+            **(existing_incident.extra_data or {}),
+            "observed_occupancy": observed_occupancy,
+            "room_capacity": room.capacity,
+            "confidence": confidence,
+        }
+
+        db.commit()
+        db.refresh(existing_incident)
+
+        return {
+            "event_id": event.id,
+            "room_id": room.id,
+            "room_capacity": room.capacity,
+            "observed_occupancy": observed_occupancy,
+            "occupancy_ratio": occupancy_ratio,
+            "crowding": True,
+            "incident": existing_incident,
+            "incident_created": False,
+        }
+
+    incident = Incident(
+        event_id=event.id,
+        room_id=room.id,
+        type="CROWDING",
+        severity="HIGH",
+        status="OPEN",
+        source="COMPUTER_VISION",
+        title=f"{room.name} exceeds expected occupancy",
+        description=(
+            "Computer vision detected more people "
+            "than the room capacity."
+        ),
+        extra_data={
+            "observed_occupancy": observed_occupancy,
+            "room_capacity": room.capacity,
+            "confidence": confidence,
+        },
+    )
+
+    repository_create_incident(
+        db,
+        incident,
+    )
+
+    db.commit()
+    db.refresh(incident)
+
+    return {
+        "event_id": event.id,
+        "room_id": room.id,
+        "room_capacity": room.capacity,
+        "observed_occupancy": observed_occupancy,
+        "occupancy_ratio": occupancy_ratio,
+        "crowding": True,
+        "incident": incident,
+        "incident_created": True,
     }

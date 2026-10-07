@@ -141,3 +141,31 @@ def get_incident_context(
         "vendors": vendors,
         "equipment_assignments": equipment_assignments,
     }
+
+def find_open_crowding_incident(
+    db: Session,
+    event_id: int,
+    room_id: int,
+) -> Incident | None:
+    statement = (
+        select(Incident)
+        .where(
+            Incident.event_id == event_id,
+            Incident.room_id == room_id,
+            Incident.type == "CROWDING",
+            Incident.status == "OPEN",
+        )
+        .order_by(Incident.id.desc())
+    )
+
+    return db.scalars(statement).first()
+
+
+def create_incident(
+    db: Session,
+    incident: Incident,
+) -> Incident:
+    db.add(incident)
+    db.flush()
+
+    return incident
