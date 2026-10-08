@@ -22,6 +22,8 @@ services:
       context: ./ml
     container_name: nexcord-ml
     restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:8000
     command: ["uv", "run", "uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8100"]
     ports:
       - "8100:8100"
@@ -52,12 +54,9 @@ services:
       ML_URL: http://ml:8100
       MCP_URL: http://mcp-server:8001/mcp
       NEXCORD_BASE_URL: http://127.0.0.1:8000
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
     command:
-      [
-        "sh",
-        "-c",
-        "uv run alembic upgrade head && uv run uvicorn backend.main:app --host 0.0.0.0 --port 8000"
-      ]
+      ["sh","-c","uv run alembic upgrade head && uv run uvicorn backend.main:app --host 0.0.0.0 --port 8000"]
     depends_on:
       postgres:
         condition: service_healthy

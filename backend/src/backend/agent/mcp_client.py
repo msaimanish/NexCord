@@ -1,9 +1,10 @@
 import asyncio
+import os
 
 from mcp import Client
 
 
-MCP_URL = "http://127.0.0.1:8001/mcp"
+MCP_URL = os.getenv("MCP_URL", "http://127.0.0.1:8001/mcp")
 
 
 class NexCordMCPClient:

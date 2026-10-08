@@ -9,9 +9,10 @@ RUN pip install --no-cache-dir uv==0.12.21
 
 COPY pyproject.toml ./
 COPY README.md ./
+COPY src ./src
+
 RUN uv sync --no-dev
 
-COPY src ./src
 COPY alembic.ini ./
 COPY alembic ./alembic
 

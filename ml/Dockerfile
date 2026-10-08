@@ -9,13 +9,14 @@ RUN pip install --no-cache-dir uv==0.12.21
 
 COPY pyproject.toml ./
 COPY README.md ./
+COPY src ./src
+
 RUN uv sync --no-dev
 
 COPY api.py ./
 COPY occupancy ./occupancy
 COPY anomaly ./anomaly
 COPY risk ./risk
-COPY src ./src
 
 EXPOSE 8100
 

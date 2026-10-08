@@ -735,6 +735,7 @@ if __name__ == "__main__":
         allowed_hosts=[
             "localhost:*",
             "127.0.0.1:*",
+            "mcp-server:8001",
             "185e-124-123-133-192.ngrok-free.app",
             "185e-124-123-133-192.ngrok-free.app:*",
         ]

@@ -26,8 +26,9 @@ from backend.services.plan_service import (
 
 from backend.agent.mcp_client import NexCordMCPClient
 from langgraph.types import interrupt
-from langgraph.checkpoint.memory import MemorySaver
-
+from langgraph.checkpoint.postgres import PostgresSaver
+from psycopg import Connection
+from psycopg.rows import dict_row
 
 
 BASE_URL = "http://127.0.0.1:8000"
@@ -892,8 +893,28 @@ def build_graph():
         END,
     )
 
-    checkpointer = MemorySaver()
-    return builder.compile(checkpointer=checkpointer)
+    database_url = os.getenv("DATABASE_URL")
+
+    if not database_url:
+        raise RuntimeError("DATABASE_URL is not configured")
+
+    database_url = database_url.replace(
+        "postgresql+psycopg://",
+        "postgresql://",
+    )
+
+    connection = Connection.connect(
+        database_url,
+        autocommit=True,
+        prepare_threshold=0,
+        row_factory=dict_row,
+    )
+
+    checkpointer = PostgresSaver(connection)
+
+    return builder.compile(
+        checkpointer=checkpointer,
+    )
 
 def detect_node(state):
     incidents = state.get("incidents", [])

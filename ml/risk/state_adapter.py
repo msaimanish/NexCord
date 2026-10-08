@@ -1,23 +1,20 @@
 from datetime import datetime, timezone
-
+import os
 import httpx
-
 from risk.features import RiskFeatures
 
 
-BASE_URL = "http://127.0.0.1:8000"
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 
 
 def _get(
     path: str,
 ) -> dict | list:
     response = httpx.get(
-        f"{BASE_URL}{path}",
+        f"{BACKEND_URL}{path}",
         timeout=10.0,
     )
-
     response.raise_for_status()
-
     return response.json()
 
 

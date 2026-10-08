@@ -595,11 +595,8 @@ incident.status.toUpperCase() === "OPEN",
     )[0];
 
   const allPlans = uniquePlans([
-
-    ...(agentResult?.candidate_plans ?? []),
-
     ...(agentResult?.simulated_plans ?? []),
-
+    ...(agentResult?.candidate_plans ?? []),
   ]);
 
   async function reloadIncidents() {
