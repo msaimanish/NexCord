@@ -68,15 +68,19 @@ def reason_node(
     llm = LLMClient()
 
     event_state = state["event_state"]
+    selected_plan = state.get("selected_plan")
 
     prompt = f"""
-You are NexCord, an event operations intelligence
-assistant.
+You are NexCord, an event operations intelligence assistant.
 
-Analyze the current operational state below.
+Your response must primarily address the user's request and the
+response plan NexCord has already selected.
 
 User request:
 {state["user_request"]}
+
+Selected response plan:
+{json.dumps(selected_plan, indent=2)}
 
 Operational state:
 {json.dumps(event_state, indent=2)}
@@ -99,15 +103,59 @@ Candidate response plans:
 Simulated response plans:
 {json.dumps(state.get("simulated_plans", []), indent=2)}
 
-Identify:
+Follow these rules carefully:
 
-1. The most important operational problems.
-2. Which problems are highest priority.
-3. The likely impact on the event.
-4. What should be investigated next.
+1. The user's request is the primary focus of the response.
 
-Do NOT execute or recommend an irreversible action yet.
-This is an analysis step only.
+2. Start by addressing the incident or problem the user asked about.
+
+3. Treat the Selected response plan as NexCord's current best
+   proposed solution because it has already passed simulation.
+
+4. Explain the selected plan clearly:
+   - what action will be taken
+   - why it is appropriate
+   - expected impact
+   - estimated delay
+   - risk level
+
+5. Do NOT replace the selected plan with another plan.
+
+6. Other incidents may be mentioned as secondary context when they
+   materially affect the user's request, but they must not dominate
+   the response.
+
+7. Do not invent facts, capabilities, vendor commitments, staff
+   availability, room infrastructure, or operational results that
+   are not present in the supplied data.
+
+8. Clearly distinguish between:
+   - confirmed current state
+   - simulated/expected state
+   - proposed action
+
+9. No irreversible action has been executed yet.
+   Human approval is required before execution.
+
+10. This is an analysis/proposal response only. Do not claim that
+    the selected plan has already been executed or verified.
+
+Structure the response like this:
+
+### Situation
+Briefly describe the incident the user asked about.
+
+### Recommended Plan
+Describe the selected plan.
+
+### Expected Impact
+State the expected state change, cost, delay, and risk.
+
+### Other Relevant Issues
+Mention only other incidents that materially affect this request.
+
+### Approval
+State that human approval is required before execution.
 
 Keep the response concise and operationally useful.
 """
@@ -119,7 +167,6 @@ Keep the response concise and operationally useful.
     return {
         "response": response,
     }
-
 
 def predict_node(state):
     event_id = state["event_id"]
@@ -273,6 +320,7 @@ def generate_plans_node(state):
             if problem["type"] not in (
                 "ROOM_DOUBLE_BOOKED",
                 "CROWDING",
+                "EQUIPMENT_FAILURE",
             ):
                 continue
 
@@ -373,51 +421,125 @@ def simulate_node(state):
         "simulated_plans": simulated_plans
     }
 
-def select_plan_node(state: AgentState) -> dict:
-    simulated_plans = state.get(
-        "simulated_plans",
-        [],
-    )
+def select_plan_node(state: AgentState):
+    simulated_plans = state.get("simulated_plans", [])
 
-    valid_plans = [
+    successful_plans = [
         plan
         for plan in simulated_plans
-        if plan.get("simulation_success") is True
+        if (
+            plan.get("simulation_result")
+            and plan["simulation_result"].get("success") is True
+        )
     ]
 
-    if not valid_plans:
+    if not successful_plans:
         return {
             "selected_plan": None,
+            "approval_status": "NO_VALID_PLAN",
         }
 
-    risk_rank = {
-        "LOW": 0,
-        "MEDIUM": 1,
-        "HIGH": 2,
-        "CRITICAL": 3,
+    user_request = (state.get("user_request") or "").lower()
+
+    requested_type = None
+
+    if any(
+        word in user_request
+        for word in (
+            "projector",
+            "equipment",
+            "device",
+            "display",
+            "screen",
+        )
+    ):
+        requested_type = "EQUIPMENT_FAILURE"
+
+    elif any(
+        word in user_request
+        for word in (
+            "crowd",
+            "overcrowd",
+            "capacity",
+        )
+    ):
+        requested_type = "CROWDING"
+
+    elif any(
+        word in user_request
+        for word in (
+            "double book",
+            "double-book",
+            "reservation conflict",
+        )
+    ):
+        requested_type = "ROOM_DOUBLE_BOOKED"
+
+    elif any(
+        word in user_request
+        for word in (
+            "judge",
+            "staff",
+            "person unavailable",
+        )
+    ):
+        requested_type = "PERSON_UNAVAILABLE"
+
+    elif any(
+        word in user_request
+        for word in (
+            "caterer",
+            "catering",
+            "vendor",
+        )
+    ):
+        requested_type = "VENDOR_CANCELLED"
+
+    detected_problems = state.get("detected_problems", [])
+
+    problem_type_by_incident = {
+        problem["incident_id"]: problem["type"]
+        for problem in detected_problems
+        if problem.get("incident_id") is not None
     }
 
-    selected_plan = min(
-        valid_plans,
-        key=lambda plan: (
-            risk_rank.get(
-                plan.get("risk_level", "HIGH"),
-                99,
-            ),
-            plan.get(
-                "estimated_delay_minutes",
-                999999,
-            ),
-            plan.get(
-                "estimated_cost",
-                999999,
-            ),
-        ),
-    )
+    def sort_key(plan):
+        incident_type = problem_type_by_incident.get(
+            plan.get("incident_id")
+        )
+
+        intent_match = (
+            0
+            if requested_type is not None
+            and incident_type == requested_type
+            else 1
+        )
+
+        risk_rank = {
+            "LOW": 0,
+            "MEDIUM": 1,
+            "HIGH": 2,
+        }.get(plan.get("risk_level", "HIGH"), 3)
+
+        delay = plan.get("estimated_delay_minutes", 999999)
+        cost = plan.get("estimated_cost", 999999)
+
+        return (
+            intent_match,
+            risk_rank,
+            delay,
+            cost,
+        )
+
+    selected_plan = sorted(
+        successful_plans,
+        key=sort_key,
+    )[0]
 
     return {
         "selected_plan": selected_plan,
     }
+
 
 def approval_node(state: AgentState) -> dict:
     selected_plan = state.get("selected_plan")

@@ -30,7 +30,7 @@ from backend.services.plan_service import (
 from backend.services.knowledge_service import (
     query_knowledge as query_knowledge_service,
 )
-
+from mcp.server.transport_security import TransportSecuritySettings
 
 
 mcp = MCPServer(
@@ -730,8 +730,18 @@ def query_knowledge(
         db.close()
 
 if __name__ == "__main__":
+    security = TransportSecuritySettings(
+        allowed_hosts=[
+            "localhost:*",
+            "127.0.0.1:*",
+            "185e-124-123-133-192.ngrok-free.app",
+            "185e-124-123-133-192.ngrok-free.app:*",
+        ]
+    )
+
     mcp.run(
         transport="streamable-http",
         host="127.0.0.1",
         port=8001,
+        transport_security=security,
     )
