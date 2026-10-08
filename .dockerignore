@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+.github
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.venv
+venv
+
+# Node
+node_modules
+.next
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Local/editor
+.vscode
+.idea
+.DS_Store

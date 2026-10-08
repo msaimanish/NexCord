@@ -1,3 +1,4 @@
+import os
 from mcp.server import MCPServer
 from backend.database import SessionLocal
 from backend.services.event_service import get_event_operational_state
@@ -741,7 +742,7 @@ if __name__ == "__main__":
 
     mcp.run(
         transport="streamable-http",
-        host="127.0.0.1",
-        port=8001,
+        host=os.getenv("MCP_HOST", "127.0.0.1"),
+        port=int(os.getenv("MCP_PORT", "8001")),
         transport_security=security,
     )

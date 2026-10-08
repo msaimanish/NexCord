@@ -1,9 +1,26 @@
-# Personal notes on project
+# ============================================================
+# NexCord - Root Git Ignore
+# ============================================================
+
+# ----------------------------
+# Personal notes
+# ----------------------------
 notes/
 
+# ----------------------------
+# Environment variables / secrets
+# ----------------------------
+.env
+.env.*
+!.env.example
+
+# ----------------------------
 # Python
+# ----------------------------
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 *.so
 
 # Virtual environments
@@ -11,42 +28,105 @@ __pycache__/
 venv/
 env/
 
-# Environment variables
-.env
-.env.*
-!.env.example
+# Python build / packaging
+build/
+dist/
+*.egg-info/
+*.whl
 
+# Testing / type checking / linting
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# ----------------------------
 # Jupyter
+# ----------------------------
 .ipynb_checkpoints/
 
-# Node
+# ----------------------------
+# Node / Next.js
+# ----------------------------
 node_modules/
 .next/
 out/
-dist/
 
-# Build artifacts
-build/
-*.egg-info/
+# npm logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
 
+# ----------------------------
 # ML artifacts
+# ----------------------------
 mlruns/
 models/
 checkpoints/
+
+# Model files
 *.pt
 *.pth
+*.ckpt
 *.onnx
+*.joblib
+*.pkl
 
+# ----------------------------
 # Data
+# ----------------------------
 data/raw/
 data/processed/
 
-# IDE
+# Keep directory structure if needed
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# ----------------------------
+# Database / local runtime
+# ----------------------------
+*.db
+*.sqlite
+*.sqlite3
+
+# PostgreSQL local dumps
+*.dump
+*.sql.gz
+
+# ----------------------------
+# Logs
+# ----------------------------
+*.log
+logs/
+
+# ----------------------------
+# Docker
+# ----------------------------
+docker-compose.override.yml
+
+# ----------------------------
+# IDE / editors
+# ----------------------------
 .vscode/
 .idea/
 
-# OS
-.DS_Store
+# Vim / Neovim
+*.swp
+*.swo
+*~
 
-# Logs
-*.log
+# ----------------------------
+# OS
+# ----------------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------------
+# Temporary files
+# ----------------------------
+tmp/
+temp/
+*.tmp
+*.bak

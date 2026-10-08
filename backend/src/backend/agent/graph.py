@@ -31,7 +31,7 @@ from langgraph.checkpoint.memory import MemorySaver
 
 
 BASE_URL = "http://127.0.0.1:8000"
-ML_URL = "http://127.0.0.1:8100"
+ML_URL = os.getenv("ML_URL", "http://127.0.0.1:8100")
 
 def observe_node(
     state: AgentState,
