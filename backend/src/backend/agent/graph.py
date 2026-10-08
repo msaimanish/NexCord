@@ -1,5 +1,5 @@
 import json
-
+import os
 import httpx
 
 from langgraph.graph import (
@@ -59,6 +59,12 @@ def observe_node(
 def reason_node(
     state: AgentState,
 ) -> dict:
+
+    if os.getenv("NEXCORD_EVAL_MODE") == "1":
+        return {
+            "response": "Evaluation mode: reasoning response generation skipped."
+        }
+
     llm = LLMClient()
 
     event_state = state["event_state"]
@@ -264,7 +270,10 @@ def generate_plans_node(state):
 
     try:
         for problem in detected_problems:
-            if problem["type"] != "ROOM_DOUBLE_BOOKED":
+            if problem["type"] not in (
+                "ROOM_DOUBLE_BOOKED",
+                "CROWDING",
+            ):
                 continue
 
             incident_id = problem["incident_id"]

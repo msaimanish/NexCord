@@ -1,6 +1,6 @@
 {
-  "scenario_id": "room_double_booking_rejected_001",
-  "name": "Robotics final room double booking - rejected approval",
+  "scenario_id": "phase10_rejected_002",
+  "name": "Phase 10 rejected scenario 2",
   "event_id": 3,
   "initial_state": {
     "event_id": 3,
@@ -56,6 +56,10 @@
   "reset_fixture": {
     "type": "room_double_booking",
     "source_reservation_id": 3,
-    "evaluation_plan_ids": [4, 5, 6]
+    "evaluation_plan_ids": [
+      4,
+      5,
+      6
+    ]
   }
 }

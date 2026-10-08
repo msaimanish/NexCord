@@ -1,6 +1,6 @@
 {
-  "scenario_id": "room_double_booking_rejected_001",
-  "name": "Robotics final room double booking - rejected approval",
+  "scenario_id": "phase10_safe_011",
+  "name": "Phase 10 safe scenario 11",
   "event_id": 3,
   "initial_state": {
     "event_id": 3,
@@ -31,19 +31,17 @@
     "CANCEL_RESERVATION"
   ],
   "desired_final_state": {
-    "original_room_reservation": "ACTIVE",
-    "replacement_room_reservation": "NONE",
-    "replacement_room_id": null,
-    "replacement_room": null,
-    "plan_status": "PROPOSED"
+    "original_room_reservation": "CANCELLED",
+    "replacement_room_reservation": "ACTIVE",
+    "plan_status": "VERIFIED"
   },
   "expected_outcome": {
-    "task_completed": false,
-    "verification_success": false,
+    "task_completed": true,
+    "verification_success": true,
     "recovery_required": false,
     "recovery_success": false
   },
-  "approval_decision": "reject",
+  "approval_decision": "approve",
   "plan_quality_requirements": {
     "max_risk_level": "LOW",
     "max_estimated_delay_minutes": 0,
@@ -56,6 +54,10 @@
   "reset_fixture": {
     "type": "room_double_booking",
     "source_reservation_id": 3,
-    "evaluation_plan_ids": [4, 5, 6]
+    "evaluation_plan_ids": [
+      4,
+      5,
+      6
+    ]
   }
 }

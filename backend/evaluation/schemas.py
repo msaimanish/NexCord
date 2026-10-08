@@ -8,6 +8,7 @@ class ExpectedOutcome(BaseModel):
     verification_success: bool
     recovery_required: bool = False
     recovery_success: bool = False
+    no_valid_plan: bool = False
 
 
 class EvaluationScenario(BaseModel):

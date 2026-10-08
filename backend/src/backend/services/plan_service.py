@@ -89,7 +89,10 @@ def generate_candidate_plans(
     event = impact["event"]
     affected_room = impact["affected_room"]
 
-    if incident.type != "ROOM_DOUBLE_BOOKED":
+    if incident.type not in (
+        "ROOM_DOUBLE_BOOKED",
+        "CROWDING",
+    ):
         return []
 
     if affected_room is None:
