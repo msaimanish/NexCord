@@ -3,60 +3,107 @@ services:
     image: pgvector/pgvector:pg18
     container_name: nexcord-postgres
     restart: unless-stopped
+
     environment:
       POSTGRES_DB: nexcord
       POSTGRES_USER: nexcord
-      POSTGRES_PASSWORD: nexcord_dev_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
+
     volumes:
       - nexcord_postgres_data:/var/lib/postgresql
+
+    networks:
+      - app_net
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nexcord -d nexcord"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+
   ml:
     build:
       context: ./ml
     container_name: nexcord-ml
     restart: unless-stopped
+
     environment:
       BACKEND_URL: http://backend:8000
-    command: ["uv", "run", "uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8100"]
+
+    command:
+      [
+        "uv",
+        "run",
+        "uvicorn",
+        "api:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8100"
+      ]
+
     ports:
-      - "8100:8100"
+      - "127.0.0.1:8100:8100"
+
+    networks:
+      - app_net
+
 
   mcp-server:
     build:
       context: ./backend
     container_name: nexcord-mcp
     restart: unless-stopped
+
     environment:
-      DATABASE_URL: postgresql+psycopg://nexcord:nexcord_dev_password@postgres:5432/nexcord
+      DATABASE_URL: postgresql+psycopg://nexcord:${POSTGRES_PASSWORD}@postgres:5432/nexcord
       MCP_HOST: 0.0.0.0
       MCP_PORT: 8001
-    command: ["uv", "run", "python", "-m", "backend.mcp_server"]
+
+    command:
+      [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "backend.mcp_server"
+      ]
+
     depends_on:
       postgres:
         condition: service_healthy
+
     ports:
-      - "8001:8001"
+      - "127.0.0.1:8001:8001"
+
+    networks:
+      - app_net
+
 
   backend:
     build:
       context: ./backend
     container_name: nexcord-backend
     restart: unless-stopped
+
     environment:
-      DATABASE_URL: postgresql+psycopg://nexcord:nexcord_dev_password@postgres:5432/nexcord
+      DATABASE_URL: postgresql+psycopg://nexcord:${POSTGRES_PASSWORD}@postgres:5432/nexcord
       ML_URL: http://ml:8100
       MCP_URL: http://mcp-server:8001/mcp
       NEXCORD_BASE_URL: http://127.0.0.1:8000
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+
     command:
-      ["sh","-c","uv run alembic upgrade head && uv run uvicorn backend.main:app --host 0.0.0.0 --port 8000"]
+      [
+        "sh",
+        "-c",
+        "uv run alembic upgrade head && uv run uvicorn backend.main:app --host 0.0.0.0 --port 8000"
+      ]
+
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,24 +111,47 @@ services:
         condition: service_started
       mcp-server:
         condition: service_started
+
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+
+    networks:
+      - app_net
+
 
   frontend:
     build:
       context: ./frontend
       args:
         NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
+
     container_name: nexcord-frontend
     restart: unless-stopped
+
     environment:
       NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
-    command: ["npm", "run", "start"]
+
+    command:
+      ["npm", "run", "start"]
+
     depends_on:
       backend:
         condition: service_started
+
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
+
+    networks:
+      - frontend_net
+
+
+networks:
+  app_net:
+    driver: bridge
+
+  frontend_net:
+    driver: bridge
+
 
 volumes:
   nexcord_postgres_data:
