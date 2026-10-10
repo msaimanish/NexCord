@@ -11,7 +11,7 @@ COPY pyproject.toml ./
 COPY README.md ./
 COPY src ./src
 
-RUN uv sync --no-dev
+RUN UV_TORCH_BACKEND=cpu uv sync --no-dev
 
 COPY api.py ./
 COPY occupancy ./occupancy
