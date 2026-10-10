@@ -2,6 +2,7 @@ services:
   ml:
     build:
       context: ./ml
+      dockerfile: Dockerfile.aws
     restart: unless-stopped
     environment:
       BACKEND_URL: http://backend:8000
@@ -11,6 +12,7 @@ services:
   mcp-server:
     build:
       context: ./backend
+      dockerfile: Dockerfile.aws
     restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
@@ -23,6 +25,7 @@ services:
   backend:
     build:
       context: ./backend
+      dockerfile: Dockerfile.aws
     restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}

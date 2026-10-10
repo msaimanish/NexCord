@@ -1,0 +1,35 @@
+# syntax=docker/dockerfile:1
+FROM python:3.12-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN pip install --no-cache-dir uv==0.12.21
+
+COPY pyproject.toml ./
+
+RUN cat >> pyproject.toml <<'PYPROJECT'
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
+PYPROJECT
+
+COPY README.md ./
+COPY src ./src
+COPY api.py ./
+COPY occupancy ./occupancy
+COPY anomaly ./anomaly
+COPY risk ./risk
+
+RUN uv sync --no-dev && uv cache clean
+
+EXPOSE 8100
+
+CMD ["uv", "run", "uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8100"]
