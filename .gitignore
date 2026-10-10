@@ -130,3 +130,9 @@ tmp/
 temp/
 *.tmp
 *.bak
+
+# AWS deployment runtime secrets
+.env.aws
+
+# Local database backups
+/backups/
