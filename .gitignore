@@ -63,7 +63,7 @@ pnpm-debug.log*
 # ML artifacts
 # ----------------------------
 mlruns/
-models/
+/models/
 checkpoints/
 
 # Model files
