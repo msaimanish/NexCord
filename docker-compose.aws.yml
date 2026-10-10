@@ -1,5 +1,11 @@
 services:
   ml:
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ap-south-1
+        awslogs-group: /nexcord/prod/ml
+        awslogs-create-group: "false"
     build:
       context: ./ml
       dockerfile: Dockerfile.aws
@@ -10,6 +16,12 @@ services:
       - app_net
 
   mcp-server:
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ap-south-1
+        awslogs-group: /nexcord/prod/mcp-server
+        awslogs-create-group: "false"
     build:
       context: ./backend
       dockerfile: Dockerfile.aws
@@ -23,6 +35,12 @@ services:
       - app_net
 
   backend:
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ap-south-1
+        awslogs-group: /nexcord/prod/backend
+        awslogs-create-group: "false"
     build:
       context: ./backend
       dockerfile: Dockerfile.aws
@@ -46,6 +64,12 @@ services:
       - edge_net
 
   frontend:
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ap-south-1
+        awslogs-group: /nexcord/prod/frontend
+        awslogs-create-group: "false"
     build:
       context: ./frontend
       args:
@@ -57,6 +81,12 @@ services:
       - edge_net
 
   nginx:
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ap-south-1
+        awslogs-group: /nexcord/prod/nginx
+        awslogs-create-group: "false"
     image: nginx:alpine
     restart: unless-stopped
     ports:
