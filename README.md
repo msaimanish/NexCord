@@ -20,7 +20,6 @@ NexCord helps event teams respond to operational problems such as equipment fail
 - [Useful Docker commands](#useful-docker-commands)
 - [Data and persistence](#data-and-persistence)
 - [Security and limitations](#security-and-limitations)
-- [Project scope](#project-scope)
 
 ## Why NexCord?
 
