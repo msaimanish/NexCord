@@ -89,8 +89,6 @@ services:
         awslogs-create-group: "false"
     image: nginx:alpine
     restart: unless-stopped
-    ports:
-      - "80:80"
     volumes:
       - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
@@ -99,8 +97,29 @@ services:
     networks:
       - edge_net
 
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      NEXCORD_BASIC_AUTH_HASH: ${NEXCORD_BASIC_AUTH_HASH:?NEXCORD_BASIC_AUTH_HASH is required}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - nginx
+    networks:
+      - edge_net
+
 networks:
   app_net:
     driver: bridge
   edge_net:
     driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

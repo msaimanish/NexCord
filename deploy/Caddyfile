@@ -1,0 +1,7 @@
+nexcord-manish.duckdns.org {
+    encode zstd gzip
+    basic_auth {
+        manish {$NEXCORD_BASIC_AUTH_HASH}
+    }
+    reverse_proxy nginx:80
+}
