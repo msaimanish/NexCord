@@ -1,7 +1,3 @@
-# NexCord — Devpost Submission Draft
-
-> Review and paste relevant sections into Devpost. Do not submit until the MCP version check and final video checklist are complete.
-
 ## Project title
 
 **NexCord: A Human-in-the-Loop Incident Commander for Live Events**

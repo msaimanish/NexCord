@@ -1,43 +1,145 @@
-# NexCord — Hackathon Friction Log Draft
+# NexCord — Development Friction Log
 
-These entries are based on issues encountered while building/deploying NexCord. Review each entry for accuracy and adjust wording to match the exact steps you personally performed before submitting it to Devpost.
+## 1. Building CPU-only PyTorch containers
 
-## 1. CPU-only ML image build pulled larger CUDA dependencies
+**Severity:** High
 
-- **Task:** Build the ML/backend images for a CPU-only EC2 deployment.
-- **Steps:** Built the AWS Docker images with the general dependency sync configuration, then inspected the installed PyTorch build and Docker disk usage.
-- **Expected:** CPU-only configuration would result in compact CPU images.
-- **Actual:** The dependency install pulled CUDA-related packages despite intending a CPU-only build, consuming most of the host disk.
-- **Severity:** High — build/disk pressure threatened to block deployment.
-- **Workaround:** Used AWS-specific Dockerfiles with an explicit PyTorch CPU package index/source, rebuilt, and cleaned unused Docker images.
-- **Actionable suggestion:** Clarify in package/tool docs which environment variables do and do not influence dependency resolvers, and document the supported CPU-only install mechanism in a minimal reproducible example.
+**Task attempted:** Build the ML and backend Docker images for the AWS deployment using CPU-only PyTorch.
 
-## 2. Broad Git ignore rule omitted backend model source files
+**Steps:** Initially built the AWS images using the existing dependency configuration and attempted to avoid CUDA dependencies through environment configuration.
 
-- **Task:** Deploy the FastAPI backend from a clean Git clone.
-- **Steps:** Pulled the repository on EC2 and started the service.
-- **Expected:** Required SQLAlchemy model modules would be present in the clone.
-- **Actual:** A broad `models/` ignore pattern had prevented nested backend model files from being tracked, resulting in `ModuleNotFoundError: No module named 'backend.models'`.
-- **Severity:** High — the deployed backend could not start correctly.
-- **Workaround:** Anchored the ignore rule to the repository-root `/models/` path, explicitly tracked the required backend model modules, committed the correction, and pulled it onto EC2.
-- **Actionable suggestion:** Provide a CI/release check that detects required imports whose source files are ignored or absent from the tracked repository before building deployment images.
+**Expected result:** Compact images containing CPU-only PyTorch, suitable for an EC2 instance without a GPU.
 
-## 3. CloudWatch metric filter needed post-change log events
+**Actual result:** The build downloaded large CUDA-related dependencies and filled the EC2 root disk to approximately 97% capacity.
 
-- **Task:** Create an API-only latency metric from structured Nginx logs.
-- **Steps:** Created a JSON metric filter, narrowed it to `/api/*`, generated API requests, and queried CloudWatch metric statistics.
-- **Expected:** A metric query immediately after changing the filter would make it obvious whether the new filter matched.
-- **Actual:** An early query returned an older datapoint from before the filter update; fresh requests were needed to validate the updated filter.
-- **Severity:** Medium — validation was delayed, but application functionality was not blocked.
-- **Workaround:** Generated five new API requests, confirmed their JSON access log entries, and verified a fresh metric datapoint: average latency 4.4 ms, maximum 5 ms, sample count 5.
-- **Actionable suggestion:** Improve the console/tooling to distinguish post-filter-change datapoints and make initial filter-match validation easier to discover.
+**Workaround:** Added an explicit PyTorch CPU package index to the AWS-specific Dockerfiles, rebuilt the images, verified that CUDA was unavailable in the CPU build, and removed unused Docker artifacts.
 
-## 4. EC2 application role lacked permissions to change security groups
+**Actionable suggestion:** Document the recommended CPU-only PyTorch installation and package-index configuration in the container deployment guides. A pre-build image-size or disk-space check would also help developers avoid exhausting instance storage.
 
-- **Task:** Open inbound ports 80 and 443 for HTTPS certificate issuance and browser access.
-- **Steps:** Attempted `ec2:AuthorizeSecurityGroupIngress` from the EC2 Systems Manager session.
-- **Expected:** The AWS CLI command would add the web rules.
-- **Actual:** AWS returned `UnauthorizedOperation` because the instance role intentionally lacked security-group modification permissions.
-- **Severity:** Medium — required network setup was blocked from the instance.
-- **Workaround:** Exited the SSM session and ran the rule update from the developer laptop's IAM identity, which had the required permission.
-- **Actionable suggestion:** Make the distinction between instance-role permissions and administrator/deployer credentials more prominent in EC2 + SSM deployment guidance, with a secure recommended workflow for modifying network policy outside the instance.
+## 2. Python model modules missing from the AWS deployment
+
+**Severity:** High
+
+**Task attempted:** Start the deployed backend after pulling the latest application code.
+
+**Steps:** Pulled the repository and started the Docker Compose services.
+
+**Expected result:** The backend would import its SQLAlchemy models and start normally.
+
+**Actual result:** The backend reported `ModuleNotFoundError` for `backend.models`. A broad `.gitignore` pattern had caused required source files under model directories to be ignored.
+
+**Workaround:** Narrowed the ignore rule to the intended root-level directory, explicitly tracked the required model modules, pushed the fix, and pulled it on EC2.
+
+**Actionable suggestion:** Use root-anchored ignore patterns when ignoring directories with common names, and add a repository check that verifies required Python source files are tracked before deploying.
+
+## 3. Docker Compose couldn't find AWS environment variables
+
+**Severity:** Medium
+
+**Task attempted:** Rebuild only the frontend on EC2.
+
+**Steps:** Invoked Docker Compose with the AWS Compose file but without explicitly loading the deployment environment file.
+
+**Expected result:** The frontend would rebuild without requiring unrelated application configuration to be entered manually.
+
+**Actual result:** Compose failed during interpolation because `DATABASE_URL` and `GEMINI_API_KEY` were not available to it.
+
+**Workaround:** Used the existing private `.env.aws` file with the `--env-file` option and avoided printing any secret values.
+
+**Actionable suggestion:** Put the required Compose invocation in the deployment documentation and make it clear which environment file is required for AWS commands.
+
+## 4. Docker socket permissions inside Systems Manager
+
+**Severity:** Medium
+
+**Task attempted:** Rebuild and restart a container through an SSM Session Manager shell.
+
+**Steps:** Ran Docker Compose as the default SSM user.
+
+**Expected result:** The command would access the Docker daemon and rebuild the frontend.
+
+**Actual result:** The shell reported permission denied on `/var/run/docker.sock`. Switching to a root shell also changed the meaning of `~`, causing an incorrect project path.
+
+**Workaround:** Used `sudo docker compose` and explicit paths under `/home/ssm-user/NexCord`.
+
+**Actionable suggestion:** Document the required permissions and supported Docker command pattern for SSM sessions, and prefer absolute paths in privilege-escalated deployment commands.
+
+## 5. Updating an AWS security group from the EC2 role
+
+**Severity:** Medium
+
+**Task attempted:** Allow public web traffic on ports 80 and 443 so Caddy could obtain a certificate and serve HTTPS.
+
+**Steps:** Tried to modify the application security group using AWS CLI from the EC2 SSM session.
+
+**Expected result:** The security group would be updated by the command.
+
+**Actual result:** AWS denied `ec2:AuthorizeSecurityGroupIngress` because the instance role did not have that permission.
+
+**Workaround:** Ran the security-group change from the local terminal using the configured IAM user, keeping the EC2 application role limited.
+
+**Actionable suggestion:** Clearly distinguish instance-role permissions from operator permissions in AWS CLI guidance and provide a least-privilege deployment checklist for security-group changes.
+
+## 6. Caddy validation through Docker Compose
+
+**Severity:** Low
+
+**Task attempted:** Validate the Caddyfile before exposing the HTTPS service.
+
+**Steps:** Ran the Compose `run` command with `validate` as the command argument.
+
+**Expected result:** Caddy would validate the configuration.
+
+**Actual result:** Docker tried to execute `validate` as the container's executable and returned `exec: "validate": executable file not found in $PATH`.
+
+**Workaround:** Used `--entrypoint caddy` to invoke the Caddy executable explicitly, after which the configuration validated successfully.
+
+**Actionable suggestion:** Include tested Docker Compose examples for running one-off Caddy validation and formatting commands.
+
+## 7. DuckDNS initially pointed at the wrong IP
+
+**Severity:** Medium
+
+**Task attempted:** Make NexCord reachable through a free DuckDNS subdomain.
+
+**Steps:** Created `nexcord-manish.duckdns.org` and checked its DNS resolution.
+
+**Expected result:** The hostname would resolve to the EC2 public IP.
+
+**Actual result:** DNS initially resolved to the laptop's public IP instead of EC2.
+
+**Workaround:** Updated the DNS record to the current EC2 address and installed a root-protected DuckDNS updater script with a systemd timer that refreshes the record periodically.
+
+**Actionable suggestion:** Add a deployment checklist that compares the hostname's resolved address with the current EC2 address before configuring TLS.
+
+## 8. Shell differences in password setup
+
+**Severity:** Low
+
+**Task attempted:** Prompt for a password without displaying the characters and store only its hash in the private environment file.
+
+**Steps:** Used Bash's `read -s` command inside the default SSM shell.
+
+**Expected result:** The shell would hide typed password input.
+
+**Actual result:** The session used `sh`, which rejected the `-s` option.
+
+**Workaround:** Started a Bash shell, then reran the command successfully without exposing the password.
+
+**Actionable suggestion:** Identify the shell expected by scripts that use Bash-specific features and use an explicit Bash shebang where appropriate.
+
+## 9. Verifying CloudWatch latency metrics
+
+**Severity:** Medium
+
+**Task attempted:** Turn structured Nginx request logs into an API latency metric and confirm the metric was receiving data.
+
+**Steps:** Created a metric filter, generated API requests, and queried CloudWatch metric statistics.
+
+**Expected result:** Recent `/api/` request latency would appear in the metric.
+
+**Actual result:** The initial filter was too broad, and the first query after narrowing it showed no new datapoint. CloudWatch metric filters apply to incoming log events, so requests and query time windows had to be aligned.
+
+**Workaround:** Restricted the filter to API URIs, generated five fresh API requests, and verified a datapoint with a 4.4 ms average and 5 ms maximum request time.
+
+**Actionable suggestion:** Document the relationship between metric-filter creation time, incoming log events, time-window selection, and alarm evaluation. Provide a smoke-test query for each custom metric.
