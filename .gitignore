@@ -136,3 +136,7 @@ temp/
 
 # Local database backups
 /backups/
+
+# Local MLflow tracking databases
+/mlflow.db
+/backend/mlflow.db
